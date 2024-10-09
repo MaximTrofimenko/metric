@@ -1,0 +1,50 @@
+version: "3.7"
+
+services:
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - target: 9090
+        published: 9595
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    healthcheck:
+      test: wget -q --spider http://localhost:9090
+      interval: 5s
+      timeout: 2s
+      retries: 25
+    logging:
+      options:
+        max-size: 1g
+    networks:
+      - "net"
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - target: 3000
+        published: 3000
+    volumes:
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+      - "grafana-storage:/var/lib/grafana"
+    healthcheck:
+      test: curl -s http://localhost:3000/api/health > /dev/null
+      interval: 5s
+      timeout: 2s
+      retries: 25
+    logging:
+      options:
+        max-size: 1g
+    networks:
+      - "net"
+
+volumes:
+  grafana-storage:
+
+networks:
+  net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.20.0.0/16
